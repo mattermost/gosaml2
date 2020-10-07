@@ -175,3 +175,48 @@ func TestScopingIDProviderOmitted(t *testing.T) {
 		require.Nil(t, el)
 	}
 }
+
+func TestScopingNameIDPolicyIncluded(t *testing.T) {
+	spURL := "https://sp.test"
+	sp := SAMLServiceProvider{
+		AssertionConsumerServiceURL: spURL,
+		AudienceURI:                 spURL,
+		IdentityProviderIssuer:      spURL,
+		IdentityProviderSSOURL:      "https://idp.test/saml/sso",
+		SignAuthnRequests:           false,
+		NameIdFormat:                NameIdFormatPersistent,
+	}
+
+	request, err := sp.BuildAuthRequest()
+	require.NoError(t, err)
+
+	doc := etree.NewDocument()
+	err = doc.ReadFromString(request)
+	require.NoError(t, err)
+
+	idpEntry := doc.FindElement("./AuthnRequest/NameIDPolicy")
+
+	require.Equal(t, idpEntry.SelectAttrValue("Format", ""), NameIdFormatPersistent)
+}
+
+func TestScopingNameIDPolicyOmitted(t *testing.T) {
+	spURL := "https://sp.test"
+
+	sp := SAMLServiceProvider{
+		AssertionConsumerServiceURL: spURL,
+		AudienceURI:                 spURL,
+		IdentityProviderIssuer:      spURL,
+		IdentityProviderSSOURL:      "https://idp.test/saml/sso",
+		SignAuthnRequests:           false,
+	}
+
+	request, err := sp.BuildAuthRequest()
+	require.NoError(t, err)
+
+	doc := etree.NewDocument()
+	err = doc.ReadFromString(request)
+	require.NoError(t, err)
+
+	el := doc.FindElement("./AuthnRequest/NameIDPolicy")
+	require.Nil(t, el)
+}
