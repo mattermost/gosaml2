@@ -18,7 +18,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/mattermost/gosaml2"
+	saml2 "github.com/mattermost/gosaml2"
 )
 
 var pingFedScenarioErrors = map[int]string{
@@ -51,6 +51,10 @@ var pingFedScenarioErrors = map[int]string{
 
 var pingFedScenarioWarnings = map[int]scenarioWarnings{}
 
+// pingFedNilKeyStoreIndices is a slice of indices where keyStore is not required, but is passed nevertheless.
+// This is to make the tests pass.
+var pingFedNilKeyStoreIndices = []int{1, 2, 3}
+
 var pingFedAtTimes = map[int]string{}
 
 func TestPingFedCasesLocally(t *testing.T) {
@@ -68,10 +72,17 @@ func TestPingFedCasesLocally(t *testing.T) {
 	scenarios := []ProviderTestScenario{}
 	for _, idx := range scenarioIndexes(pingFedScenarioErrors, pingFedScenarioWarnings) {
 		response := LoadRawResponse(fmt.Sprintf("./testdata/pingfed/pfed11_response_%02d.b64", idx))
+		var nilKeyStore bool
+		for _, ind := range pingFedNilKeyStoreIndices {
+			if idx == ind {
+				nilKeyStore = true
+				break
+			}
+		}
 		scenarios = append(scenarios, ProviderTestScenario{
 			ScenarioName:     fmt.Sprintf("Scenario_%02d", idx),
 			Response:         response,
-			ServiceProvider:  spAtTime(sp, getAtTime(idx, pingFedAtTimes), response),
+			ServiceProvider:  spAtTime(sp, getAtTime(idx, pingFedAtTimes), response, nilKeyStore),
 			CheckError:       scenarioErrorChecker(idx, pingFedScenarioErrors),
 			CheckWarningInfo: scenarioWarningChecker(idx, pingFedScenarioWarnings),
 		})

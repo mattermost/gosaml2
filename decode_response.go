@@ -189,11 +189,7 @@ func (sp *SAMLServiceProvider) decryptAssertions(el *etree.Element) error {
 		return nil
 	}
 
-	if err := etreeutils.NSFindIterate(el, SAMLAssertionNamespace, EncryptedAssertionTag, decryptAssertion); err != nil {
-		return err
-	} else {
-		return nil
-	}
+	return etreeutils.NSFindIterate(el, SAMLAssertionNamespace, EncryptedAssertionTag, decryptAssertion)
 }
 
 func (sp *SAMLServiceProvider) validateElementSignature(el *etree.Element) (*etree.Element, error) {
@@ -263,6 +259,24 @@ func (sp *SAMLServiceProvider) ValidateEncodedResponse(encodedResponse string) (
 	doc, el, err := parseResponse(raw)
 	if err != nil {
 		return nil, err
+	}
+
+	elAssertion, err := etreeutils.NSFindOne(el, SAMLAssertionNamespace, AssertionTag)
+	if err != nil {
+		return nil, err
+	}
+	elEncAssertion, err := etreeutils.NSFindOne(el, SAMLAssertionNamespace, EncryptedAssertionTag)
+	if err != nil {
+		return nil, err
+	}
+	// We verify that either one of assertion or encrypted assertion elements are present,
+	// but not both.
+	if (elAssertion == nil) == (elEncAssertion == nil) {
+		return nil, fmt.Errorf("found both or no assertion and encrypted assertion elements")
+	}
+	// And if a decryptCert is present, then it's only encrypted assertion elements.
+	if sp.SPKeyStore != nil && elAssertion != nil {
+		return nil, fmt.Errorf("all assertions are not encrypted")
 	}
 
 	var responseSignatureValidated bool

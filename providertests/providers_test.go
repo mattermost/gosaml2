@@ -19,8 +19,8 @@ import (
 	"time"
 
 	"github.com/jonboulle/clockwork"
-	"github.com/mattermost/gosaml2"
-	"github.com/russellhaering/goxmldsig"
+	saml2 "github.com/mattermost/gosaml2"
+	dsig "github.com/russellhaering/goxmldsig"
 )
 
 func TestValidateResponses(t *testing.T) {
@@ -47,7 +47,6 @@ func TestValidateResponses(t *testing.T) {
 				SignAuthnRequests:           false,
 				AudienceURI:                 "https://saml.test.nope/session/sso/saml/spentityid/dknhyszjl7",
 				IDPCertificateStore:         LoadCertificateStore("./testdata/adfs_idp_signing_cert.pem"),
-				SPKeyStore:                  LoadKeyStore("./testdata/adfs_sp_encryption_cert.pem", "./testdata/adfs_sp_encryption_key.pem"),
 				SPSigningKeyStore:           LoadKeyStore("./testdata/adfs_sp_signing_cert.pem", "./testdata/adfs_sp_signing_key.pem"),
 				Clock:                       dsig.NewFakeClock(clockwork.NewFakeClockAt(time.Date(2017, 9, 21, 23, 28, 0, 0, time.UTC))),
 			},
