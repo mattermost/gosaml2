@@ -27,9 +27,9 @@ import (
 	"time"
 
 	"github.com/jonboulle/clockwork"
-	"github.com/mattermost/gosaml2"
+	saml2 "github.com/mattermost/gosaml2"
 	"github.com/mattermost/gosaml2/types"
-	"github.com/russellhaering/goxmldsig"
+	dsig "github.com/russellhaering/goxmldsig"
 	"github.com/stretchr/testify/require"
 )
 
@@ -136,7 +136,7 @@ func getAtTime(idx int, scenarioAtTimes map[int]string) (atTime time.Time) {
 	return // zero time
 }
 
-func spAtTime(template *saml2.SAMLServiceProvider, atTime time.Time, rawResp string) *saml2.SAMLServiceProvider {
+func spAtTime(template *saml2.SAMLServiceProvider, atTime time.Time, rawResp string, nilKeyStore bool) *saml2.SAMLServiceProvider {
 	resp := &types.Response{}
 	if rawResp == "" {
 		panic(fmt.Errorf("empty rawResp"))
@@ -152,6 +152,9 @@ func spAtTime(template *saml2.SAMLServiceProvider, atTime time.Time, rawResp str
 
 	var sp saml2.SAMLServiceProvider
 	sp = *template // copy most fields template, we only set the clock below
+	if nilKeyStore {
+		sp.SPKeyStore = nil
+	}
 	if atTime.IsZero() {
 		// Prefer more official Assertion IssueInstant over Response IssueIntant
 		// (Assertion will be signed, either individually or as part of Response)
