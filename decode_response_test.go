@@ -151,7 +151,6 @@ func TestCompressedResponse(t *testing.T) {
 
 	sp := SAMLServiceProvider{
 		AssertionConsumerServiceURL: "https://f1f51ddc.ngrok.io/api/sso/saml2/acs/58cafd0573d4f375b8e70e8e",
-		SPKeyStore:                  dsig.TLSCertKeyStore(cert),
 		IDPCertificateStore: &dsig.MemoryX509CertificateStore{
 			Roots: []*x509.Certificate{idpCert},
 		},

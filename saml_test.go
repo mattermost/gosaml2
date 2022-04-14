@@ -153,6 +153,10 @@ func TestSAML(t *testing.T) {
 	require.NoError(t, err)
 	require.NotEmpty(t, authRequestURL)
 
+	// XXX: Need to set the keystore to nil to bypass the assertion
+	// to check if all elements are encrypted.
+	sp.SPKeyStore = nil
+
 	authRequestString, err := sp.BuildAuthRequest()
 	require.NoError(t, err)
 	require.NotEmpty(t, authRequestString)
@@ -284,6 +288,21 @@ func TestInvalidResponseBadBase64(t *testing.T) {
 
 	response, err := sp.ValidateEncodedResponse("invalid-base64")
 	require.EqualError(t, err, "illegal base64 data at input byte 7")
+	require.Nil(t, response)
+}
+
+func TestMixedAssertions(t *testing.T) {
+	f, err := ioutil.ReadFile("./testdata/mixed_assertions.xml")
+	if err != nil {
+		t.Fatalf("could not open test file: %v\n", err)
+	}
+
+	b64Response := base64.StdEncoding.EncodeToString(f)
+	sp := &SAMLServiceProvider{
+		SkipSignatureValidation: true,
+	}
+	response, err := sp.ValidateEncodedResponse(b64Response)
+	require.EqualError(t, err, "found both or no assertion and encrypted assertion elements")
 	require.Nil(t, response)
 }
 

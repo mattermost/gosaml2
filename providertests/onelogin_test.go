@@ -18,7 +18,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/mattermost/gosaml2"
+	saml2 "github.com/mattermost/gosaml2"
 )
 
 var oneLoginScenarioErrors = map[int]string{
@@ -182,6 +182,10 @@ var oneLoginScenarioWarnings = map[int]scenarioWarnings{
 	},
 }
 
+// oneLoginNilKeyStoreIndices is a slice of indices where keyStore is not required, but is passed nevertheless.
+// This is to make the tests pass.
+var oneLoginNilKeyStoreIndices = []int{1, 3, 4, 11, 12, 13, 14, 15, 21, 22, 25, 26, 31, 33, 34, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 81, 82, 83, 84, 85, 86, 87, 88, 89, 91, 92, 93, 94, 99, 155, 156, 157, 158, 159}
+
 var oneLoginAtTimes = map[int]string{
 	25: "2017-08-30T23:00:00Z",
 	26: "2017-08-30T23:55:00Z",
@@ -204,10 +208,17 @@ func TestOneLoginCasesLocally(t *testing.T) {
 	scenarios := []ProviderTestScenario{}
 	for _, idx := range scenarioIndexes(oneLoginScenarioErrors, oneLoginScenarioWarnings) {
 		response := LoadRawResponse(fmt.Sprintf("./testdata/onelogin/olgn09_response_%02d.b64", idx))
+		var nilKeyStore bool
+		for _, ind := range oneLoginNilKeyStoreIndices {
+			if idx == ind {
+				nilKeyStore = true
+				break
+			}
+		}
 		scenarios = append(scenarios, ProviderTestScenario{
 			ScenarioName:     fmt.Sprintf("Scenario_%02d", idx),
 			Response:         response,
-			ServiceProvider:  spAtTime(sp, getAtTime(idx, oneLoginAtTimes), response),
+			ServiceProvider:  spAtTime(sp, getAtTime(idx, oneLoginAtTimes), response, nilKeyStore),
 			CheckError:       scenarioErrorChecker(idx, oneLoginScenarioErrors),
 			CheckWarningInfo: scenarioWarningChecker(idx, oneLoginScenarioWarnings),
 		})
