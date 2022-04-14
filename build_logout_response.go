@@ -20,7 +20,7 @@ import (
 	"html/template"
 
 	"github.com/beevik/etree"
-	"github.com/russellhaering/gosaml2/uuid"
+	"github.com/mattermost/gosaml2/uuid"
 )
 
 func (sp *SAMLServiceProvider) buildLogoutResponse(statusCodeValue string, reqID string, includeSig bool) (*etree.Document, error) {
