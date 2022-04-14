@@ -72,6 +72,14 @@ func (sp *SAMLServiceProvider) buildAuthnRequest(includeSig bool) (*etree.Docume
 		}
 	}
 
+	if sp.ScopingIDPProviderId != "" && sp.ScopingIDPProviderName != "" {
+		scoping := authnRequest.CreateElement("samlp:Scoping")
+		idpList := scoping.CreateElement("samlp:IDPList")
+		idpEntry := idpList.CreateElement("samlp:IDPEntry")
+		idpEntry.CreateAttr("ProviderID", sp.ScopingIDPProviderId)
+		idpEntry.CreateAttr("Name", sp.ScopingIDPProviderName)
+	}
+
 	doc := etree.NewDocument()
 
 	// Only POST binding includes <Signature> in <AuthnRequest> (includeSig)

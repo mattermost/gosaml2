@@ -1,11 +1,11 @@
 // Copyright 2016 Russell Haering et al.
-// 
+//
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
-// 
+//
 //     https://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -161,23 +161,23 @@ var oneLoginScenarioErrors = map[int]string{
 
 var oneLoginScenarioWarnings = map[int]scenarioWarnings{
 	// 25 - signed(Response(Assertion)) - 01 with AtTime before IssueInstant
-	25: scenarioWarnings{
+	25: {
 		InvalidTime: true,
 	},
 	// 27 - Response(encrypted(signed(Assertion))) - 06 with AtTime before IssueInstant
-	27: scenarioWarnings{
+	27: {
 		InvalidTime: true,
 	},
 	// 53 - signed(Response(Assertion)) - 88 signed Response, wrong Assertion Audience (SP entity id)
-	53: scenarioWarnings{
+	53: {
 		NotInAudience: true,
 	},
 	// 58 - Response(signed(Assertion)) - 88 signed Assertion, wrong Assertion Audience (SP entity id)
-	58: scenarioWarnings{
+	58: {
 		NotInAudience: true,
 	},
 	// 158 - Response(encrypted(signed(Assertion))) - 88 encrypted signed Assertion, wrong Assertion Audience (SP entity id)
-	158: scenarioWarnings{
+	158: {
 		NotInAudience: true,
 	},
 }

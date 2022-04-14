@@ -27,9 +27,9 @@ import (
 
 	"github.com/beevik/etree"
 	"github.com/mattermost/gosaml2/types"
+	rtvalidator "github.com/mattermost/xml-roundtrip-validator"
 	dsig "github.com/russellhaering/goxmldsig"
 	"github.com/russellhaering/goxmldsig/etreeutils"
-	rtvalidator "github.com/mattermost/xml-roundtrip-validator"
 )
 
 func (sp *SAMLServiceProvider) validationContext() *dsig.ValidationContext {

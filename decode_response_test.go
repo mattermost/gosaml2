@@ -25,9 +25,9 @@ import (
 	"time"
 
 	"github.com/jonboulle/clockwork"
+	rtvalidator "github.com/mattermost/xml-roundtrip-validator"
 	"github.com/russellhaering/goxmldsig"
 	"github.com/stretchr/testify/require"
-	rtvalidator "github.com/mattermost/xml-roundtrip-validator"
 )
 
 const (
@@ -194,7 +194,7 @@ func TestMalFormedInput(t *testing.T) {
 	}
 
 	sp := &SAMLServiceProvider{
-		Clock: dsig.NewFakeClock(clockwork.NewFakeClockAt(time.Date(2019, 8, 12, 12, 00, 52, 718, time.UTC))),
+		Clock:                       dsig.NewFakeClock(clockwork.NewFakeClockAt(time.Date(2019, 8, 12, 12, 00, 52, 718, time.UTC))),
 		AssertionConsumerServiceURL: "https://saml2.test.astuart.co/sso/saml2",
 		SignAuthnRequests:           true,
 		IDPCertificateStore:         &certStore,
