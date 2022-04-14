@@ -1,11 +1,11 @@
 // Copyright 2016 Russell Haering et al.
-// 
+//
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
-// 
+//
 //     https://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,7 +28,7 @@ type EntityDescriptor struct {
 	EntityID         string            `xml:"entityID,attr"`
 	SPSSODescriptor  *SPSSODescriptor  `xml:"SPSSODescriptor,omitempty"`
 	IDPSSODescriptor *IDPSSODescriptor `xml:"IDPSSODescriptor,omitempty"`
-    Extensions       *Extensions       `xml:"Extensions,omitempty"`
+	Extensions       *Extensions       `xml:"Extensions,omitempty"`
 }
 
 type Endpoint struct {
@@ -52,7 +52,7 @@ type SPSSODescriptor struct {
 	SingleLogoutServices       []Endpoint        `xml:"SingleLogoutService"`
 	NameIDFormats              []string          `xml:"NameIDFormat"`
 	AssertionConsumerServices  []IndexedEndpoint `xml:"AssertionConsumerService"`
-    Extensions                 *Extensions       `xml:"Extensions,omitempty"`
+	Extensions                 *Extensions       `xml:"Extensions,omitempty"`
 }
 
 type IDPSSODescriptor struct {
@@ -61,9 +61,9 @@ type IDPSSODescriptor struct {
 	KeyDescriptors          []KeyDescriptor       `xml:"KeyDescriptor"`
 	NameIDFormats           []NameIDFormat        `xml:"NameIDFormat"`
 	SingleSignOnServices    []SingleSignOnService `xml:"SingleSignOnService"`
-    SingleLogoutServices    []SingleLogoutService `xml:"SingleLogoutService"`
+	SingleLogoutServices    []SingleLogoutService `xml:"SingleLogoutService"`
 	Attributes              []Attribute           `xml:"Attribute"`
-    Extensions              *Extensions           `xml:"Extensions,omitempty"`
+	Extensions              *Extensions           `xml:"Extensions,omitempty"`
 }
 
 type KeyDescriptor struct {
@@ -91,12 +91,12 @@ type SingleLogoutService struct {
 }
 
 type SigningMethod struct {
-    Algorithm           string       `xml:",attr"`
-    MinKeySize          string       `xml:"MinKeySize,attr,omitempty"`
-    MaxKeySize          string       `xml:"MaxKeySize,attr,omitempty"`
+	Algorithm  string `xml:",attr"`
+	MinKeySize string `xml:"MinKeySize,attr,omitempty"`
+	MaxKeySize string `xml:"MaxKeySize,attr,omitempty"`
 }
 
 type Extensions struct {
-    DigestMethod        *DigestMethod   `xml:",omitempty"`
-    SigningMethod       *SigningMethod  `xml:",omitempty"`
+	DigestMethod  *DigestMethod  `xml:",omitempty"`
+	SigningMethod *SigningMethod `xml:",omitempty"`
 }
