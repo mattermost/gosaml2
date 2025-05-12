@@ -3,7 +3,7 @@ name: Test
 jobs:
   test:
     name: Test Go ${{ matrix.go }}
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     strategy:
       matrix:
         go: ['1.17', '1.16']

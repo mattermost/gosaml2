@@ -121,6 +121,8 @@ func (sp *SAMLServiceProvider) Metadata() (*types.EntityDescriptor, error) {
 			},
 			EncryptionMethods: []types.EncryptionMethod{
 				{Algorithm: types.MethodAES128GCM},
+				{Algorithm: types.MethodAES192GCM},
+				{Algorithm: types.MethodAES256GCM},
 				{Algorithm: types.MethodAES128CBC},
 				{Algorithm: types.MethodAES256CBC},
 			},
@@ -187,6 +189,8 @@ func (sp *SAMLServiceProvider) MetadataWithSLO(validityHours int64) (*types.Enti
 					},
 					EncryptionMethods: []types.EncryptionMethod{
 						{Algorithm: types.MethodAES128GCM, DigestMethod: nil},
+						{Algorithm: types.MethodAES192GCM, DigestMethod: nil},
+						{Algorithm: types.MethodAES256GCM, DigestMethod: nil},
 						{Algorithm: types.MethodAES128CBC, DigestMethod: nil},
 						{Algorithm: types.MethodAES256CBC, DigestMethod: nil},
 					},

@@ -50,7 +50,7 @@ func (ea *EncryptedAssertion) DecryptBytes(cert *tls.Certificate) ([]byte, error
 	}
 
 	switch ea.EncryptionMethod.Algorithm {
-	case MethodAES128GCM:
+	case MethodAES128GCM, MethodAES192GCM, MethodAES256GCM:
 		c, err := cipher.NewGCM(k)
 		if err != nil {
 			return nil, fmt.Errorf("cannot create AES-GCM: %s", err)
