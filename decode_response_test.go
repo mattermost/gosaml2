@@ -224,5 +224,5 @@ func TestCompressionBombInput(t *testing.T) {
 	}
 
 	_, err = sp.RetrieveAssertionInfo(string(bs))
-	require.NoError(t, err, "Assertion info should be retrieved with no error")
+	require.Error(t, err, "error validating response: deflated response exceeds maximum size of 2048 bytes")
 }
