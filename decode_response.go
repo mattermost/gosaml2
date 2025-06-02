@@ -21,7 +21,7 @@ import (
 	"crypto/x509"
 	"encoding/base64"
 	"fmt"
-	"io/ioutil"
+	"io"
 
 	"encoding/xml"
 
@@ -30,6 +30,10 @@ import (
 	rtvalidator "github.com/mattermost/xml-roundtrip-validator"
 	dsig "github.com/russellhaering/goxmldsig"
 	"github.com/russellhaering/goxmldsig/etreeutils"
+)
+
+const (
+	defaultMaxDecompressedResponseSize = 5 * 1024 * 1024
 )
 
 func (sp *SAMLServiceProvider) validationContext() *dsig.ValidationContext {
@@ -174,7 +178,7 @@ func (sp *SAMLServiceProvider) decryptAssertions(el *etree.Element) error {
 			return fmt.Errorf("unable to decrypt encrypted assertion: %v", derr)
 		}
 
-		doc, _, err := parseResponse(raw)
+		doc, _, err := parseResponse(raw, sp.MaximumDecompressedBodySize)
 		if err != nil {
 			return fmt.Errorf("unable to create element from decrypted assertion bytes: %v", derr)
 		}
@@ -246,9 +250,9 @@ func (sp *SAMLServiceProvider) validateAssertionSignatures(el *etree.Element) er
 	}
 }
 
-//ValidateEncodedResponse both decodes and validates, based on SP
-//configuration, an encoded, signed response. It will also appropriately
-//decrypt a response if the assertion was encrypted
+// ValidateEncodedResponse both decodes and validates, based on SP
+// configuration, an encoded, signed response. It will also appropriately
+// decrypt a response if the assertion was encrypted
 func (sp *SAMLServiceProvider) ValidateEncodedResponse(encodedResponse string) (*types.Response, error) {
 	raw, err := base64.StdEncoding.DecodeString(encodedResponse)
 	if err != nil {
@@ -256,7 +260,7 @@ func (sp *SAMLServiceProvider) ValidateEncodedResponse(encodedResponse string) (
 	}
 
 	// Parse the raw response
-	doc, el, err := parseResponse(raw)
+	doc, el, err := parseResponse(raw, sp.MaximumDecompressedBodySize)
 	if err != nil {
 		return nil, err
 	}
@@ -344,7 +348,7 @@ func DecodeUnverifiedBaseResponse(encodedResponse string) (*types.UnverifiedBase
 
 	var response *types.UnverifiedBaseResponse
 
-	err = maybeDeflate(raw, func(maybeXML []byte) error {
+	err = maybeDeflate(raw, defaultMaxDecompressedResponseSize, func(maybeXML []byte) error {
 		response = &types.UnverifiedBaseResponse{}
 		return xml.Unmarshal(maybeXML, response)
 	})
@@ -358,26 +362,37 @@ func DecodeUnverifiedBaseResponse(encodedResponse string) (*types.UnverifiedBase
 // maybeDeflate invokes the passed decoder over the passed data. If an error is
 // returned, it then attempts to deflate the passed data before re-invoking
 // the decoder over the deflated data.
-func maybeDeflate(data []byte, decoder func([]byte) error) error {
+func maybeDeflate(data []byte, maxSize int64, decoder func([]byte) error) error {
 	err := decoder(data)
 	if err == nil {
 		return nil
 	}
 
-	deflated, err := ioutil.ReadAll(flate.NewReader(bytes.NewReader(data)))
+	// Default to 5MB max size
+	if maxSize == 0 {
+		maxSize = defaultMaxDecompressedResponseSize
+	}
+
+	lr := io.LimitReader(flate.NewReader(bytes.NewReader(data)), maxSize+1)
+
+	deflated, err := io.ReadAll(lr)
 	if err != nil {
 		return err
+	}
+
+	if int64(len(deflated)) > maxSize {
+		return fmt.Errorf("deflated response exceeds maximum size of %d bytes", maxSize)
 	}
 
 	return decoder(deflated)
 }
 
 // parseResponse is a helper function that was refactored out so that the XML parsing behavior can be isolated and unit tested
-func parseResponse(xml []byte) (*etree.Document, *etree.Element, error) {
+func parseResponse(xml []byte, maxSize int64) (*etree.Document, *etree.Element, error) {
 	var doc *etree.Document
 	var rawXML []byte
 
-	err := maybeDeflate(xml, func(xml []byte) error {
+	err := maybeDeflate(xml, maxSize, func(xml []byte) error {
 		doc = etree.NewDocument()
 		rawXML = xml
 		return doc.ReadFromBytes(xml)
@@ -409,7 +424,7 @@ func DecodeUnverifiedLogoutResponse(encodedResponse string) (*types.LogoutRespon
 
 	var response *types.LogoutResponse
 
-	err = maybeDeflate(raw, func(maybeXML []byte) error {
+	err = maybeDeflate(raw, defaultMaxDecompressedResponseSize, func(maybeXML []byte) error {
 		response = &types.LogoutResponse{}
 		return xml.Unmarshal(maybeXML, response)
 	})
@@ -427,7 +442,7 @@ func (sp *SAMLServiceProvider) ValidateEncodedLogoutResponsePOST(encodedResponse
 	}
 
 	// Parse the raw response
-	doc, el, err := parseResponse(raw)
+	doc, el, err := parseResponse(raw, sp.MaximumDecompressedBodySize)
 	if err != nil {
 		return nil, err
 	}
