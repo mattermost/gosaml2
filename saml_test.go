@@ -18,6 +18,8 @@ import (
 	"bytes"
 	"compress/flate"
 	"crypto"
+	"crypto/rand"
+	"crypto/rsa"
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/base64"
@@ -27,9 +29,12 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"math/big"
 	"testing"
+	"time"
 
 	"github.com/beevik/etree"
+	"github.com/jonboulle/clockwork"
 	"github.com/mattermost/gosaml2/types"
 	dsig "github.com/russellhaering/goxmldsig"
 	"github.com/stretchr/testify/require"
@@ -90,6 +95,37 @@ func TestDecode(t *testing.T) {
 	require.EqualValues(t, expected, assertion, "decrypted assertion did not match expectation")
 }
 
+// testKeyStoreAt implements dsig.X509KeyStore with a certificate valid at the
+// given time. This is needed because dsig.RandomKeyStoreForTest() generates
+// certs at time.Now(), which may not overlap with the idpCertificate's validity
+// window (expired 2026-02-09).
+type testKeyStoreAt struct {
+	key  *rsa.PrivateKey
+	cert []byte
+}
+
+func (ks *testKeyStoreAt) GetKeyPair() (*rsa.PrivateKey, []byte, error) {
+	return ks.key, ks.cert, nil
+}
+
+func keyStoreValidAt(t *testing.T, validAt time.Time) dsig.X509KeyStore {
+	t.Helper()
+	key, err := rsa.GenerateKey(rand.Reader, 2048)
+	require.NoError(t, err)
+
+	template := &x509.Certificate{
+		SerialNumber:          big.NewInt(1),
+		NotBefore:             validAt.Add(-24 * time.Hour),
+		NotAfter:              validAt.Add(365 * 24 * time.Hour),
+		KeyUsage:              x509.KeyUsageDigitalSignature,
+		BasicConstraintsValid: true,
+	}
+	certDER, err := x509.CreateCertificate(rand.Reader, template, template, &key.PublicKey, key)
+	require.NoError(t, err)
+
+	return &testKeyStoreAt{key: key, cert: certDER}
+}
+
 func signResponse(t *testing.T, resp string, sp *SAMLServiceProvider) string {
 	doc := etree.NewDocument()
 	err := doc.ReadFromBytes([]byte(resp))
@@ -127,8 +163,19 @@ func TestSAML(t *testing.T) {
 	require.NoError(t, err)
 	require.NotEmpty(t, cert)
 
-	randomKeyStore := dsig.RandomKeyStoreForTest()
-	_, _cert, err := randomKeyStore.GetKeyPair()
+	// Pin the clock to a time when the idpCertificate is still valid
+	// (cert valid: 2016-02-09 to 2026-02-09). We also create a test key
+	// store whose cert is valid at this pinned time, since
+	// dsig.RandomKeyStoreForTest() generates certs at time.Now() which
+	// may fall outside the idpCertificate's validity window.
+	//
+	// TODO: Replace idpCertificate with a long-lived test cert. See PR
+	// description for renewal instructions.
+	pinnedTime := time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC)
+	fakeClock := dsig.NewFakeClock(clockwork.NewFakeClockAt(pinnedTime))
+
+	testKS := keyStoreValidAt(t, pinnedTime)
+	_, _cert, err := testKS.GetKeyPair()
 
 	cert0, err := x509.ParseCertificate(_cert)
 	require.NoError(t, err)
@@ -145,8 +192,9 @@ func TestSAML(t *testing.T) {
 		SignAuthnRequests:           true,
 		AudienceURI:                 "123",
 		IDPCertificateStore:         &certStore,
-		SPKeyStore:                  randomKeyStore,
+		SPKeyStore:                  testKS,
 		NameIdFormat:                NameIdFormatPersistent,
+		Clock:                       fakeClock,
 	}
 
 	authRequestURL, err := sp.BuildAuthURL("/some/link/here")
