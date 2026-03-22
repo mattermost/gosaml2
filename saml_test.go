@@ -176,6 +176,7 @@ func TestSAML(t *testing.T) {
 
 	testKS := keyStoreValidAt(t, pinnedTime)
 	_, _cert, err := testKS.GetKeyPair()
+	require.NoError(t, err)
 
 	cert0, err := x509.ParseCertificate(_cert)
 	require.NoError(t, err)
