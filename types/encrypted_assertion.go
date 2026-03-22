@@ -68,17 +68,20 @@ func (ea *EncryptedAssertion) DecryptBytes(cert *tls.Certificate) ([]byte, error
 	case MethodAES128CBC, MethodAES256CBC, MethodTripleDESCBC:
 		blockSize := k.BlockSize()
 
-		// The ciphertext must contain at least an IV (one block) plus one
-		// block of encrypted data, and the encrypted portion must be a
-		// multiple of the block size. Malformed or truncated SAML responses
-		// can violate these constraints, causing cipher.CryptBlocks to panic.
+		// All validation and decryption errors in the CBC path return the
+		// same generic message to prevent padding oracle attacks. Distinct
+		// errors would let an attacker distinguish "invalid padding" from
+		// other failures, enabling block-by-block decryption of the
+		// ciphertext.
+		cbcErr := fmt.Errorf("failed to decrypt CBC ciphertext")
+
 		if len(data) < 2*blockSize {
-			return nil, fmt.Errorf("ciphertext too short for CBC decryption: got %d bytes, need at least %d", len(data), 2*blockSize)
+			return nil, cbcErr
 		}
 
 		nonce, data := data[:blockSize], data[blockSize:]
 		if len(data)%blockSize != 0 {
-			return nil, fmt.Errorf("ciphertext is not a multiple of the block size (%d): got %d bytes", blockSize, len(data))
+			return nil, cbcErr
 		}
 
 		c := cipher.NewCBCDecrypter(k, nonce)
@@ -88,13 +91,13 @@ func (ea *EncryptedAssertion) DecryptBytes(cert *tls.Certificate) ([]byte, error
 		data = bytes.TrimRight(data, "\x00")
 
 		if len(data) == 0 {
-			return nil, fmt.Errorf("decrypted CBC data is empty after trimming")
+			return nil, cbcErr
 		}
 
 		// Calculate index to remove based on PKCS#7 padding
 		padLength := int(data[len(data)-1])
 		if padLength == 0 || padLength > blockSize || padLength > len(data) {
-			return nil, fmt.Errorf("invalid PKCS#7 padding length: %d (block size %d, data length %d)", padLength, blockSize, len(data))
+			return nil, cbcErr
 		}
 
 		lastGoodIndex := len(data) - padLength

@@ -88,17 +88,17 @@ func TestDecryptBytes_CBCTruncatedCiphertext(t *testing.T) {
 		{
 			name:        "empty ciphertext",
 			cipherData:  []byte{},
-			errContains: "ciphertext too short",
+			errContains: "failed to decrypt CBC ciphertext",
 		},
 		{
 			name:        "only IV, no data blocks",
 			cipherData:  make([]byte, 16), // exactly one block (IV only)
-			errContains: "ciphertext too short",
+			errContains: "failed to decrypt CBC ciphertext",
 		},
 		{
 			name:        "not a multiple of block size",
 			cipherData:  make([]byte, 16+17), // IV (16) + 17 bytes (> blockSize but not a multiple)
-			errContains: "not a multiple of the block size",
+			errContains: "failed to decrypt CBC ciphertext",
 		},
 	}
 
