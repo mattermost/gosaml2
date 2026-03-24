@@ -56,6 +56,9 @@ func (ea *EncryptedAssertion) DecryptBytes(cert *tls.Certificate) ([]byte, error
 			return nil, fmt.Errorf("cannot create AES-GCM: %s", err)
 		}
 
+		if len(data) < c.NonceSize() {
+			return nil, fmt.Errorf("ciphertext too short for AES-GCM: got %d bytes, need at least %d for nonce", len(data), c.NonceSize())
+		}
 		nonce, data := data[:c.NonceSize()], data[c.NonceSize():]
 		plainText, err := c.Open(nil, nonce, data, nil)
 		if err != nil {
@@ -63,16 +66,41 @@ func (ea *EncryptedAssertion) DecryptBytes(cert *tls.Certificate) ([]byte, error
 		}
 		return plainText, nil
 	case MethodAES128CBC, MethodAES256CBC, MethodTripleDESCBC:
-		nonce, data := data[:k.BlockSize()], data[k.BlockSize():]
+		blockSize := k.BlockSize()
+
+		// All validation and decryption errors in the CBC path return the
+		// same generic message to prevent padding oracle attacks. Distinct
+		// errors would let an attacker distinguish "invalid padding" from
+		// other failures, enabling block-by-block decryption of the
+		// ciphertext.
+		cbcErr := fmt.Errorf("failed to decrypt CBC ciphertext")
+
+		if len(data) < 2*blockSize {
+			return nil, cbcErr
+		}
+
+		nonce, data := data[:blockSize], data[blockSize:]
+		if len(data)%blockSize != 0 {
+			return nil, cbcErr
+		}
+
 		c := cipher.NewCBCDecrypter(k, nonce)
 		c.CryptBlocks(data, data)
 
 		// Remove zero bytes
 		data = bytes.TrimRight(data, "\x00")
 
-		// Calculate index to remove based on padding
-		padLength := data[len(data)-1]
-		lastGoodIndex := len(data) - int(padLength)
+		if len(data) == 0 {
+			return nil, cbcErr
+		}
+
+		// Calculate index to remove based on PKCS#7 padding
+		padLength := int(data[len(data)-1])
+		if padLength == 0 || padLength > blockSize || padLength > len(data) {
+			return nil, cbcErr
+		}
+
+		lastGoodIndex := len(data) - padLength
 		return data[:lastGoodIndex], nil
 	default:
 		return nil, fmt.Errorf("unknown symmetric encryption method %#v", ea.EncryptionMethod.Algorithm)
