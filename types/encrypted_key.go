@@ -77,8 +77,16 @@ const (
 //Well-known hash methods
 const (
 	MethodSHA1   = "http://www.w3.org/2000/09/xmldsig#sha1"
-	MethodSHA256 = "http://www.w3.org/2000/09/xmldsig#sha256"
-	MethodSHA512 = "http://www.w3.org/2000/09/xmldsig#sha512"
+	MethodSHA256 = "http://www.w3.org/2001/04/xmlenc#sha256"
+	MethodSHA512 = "http://www.w3.org/2001/04/xmlenc#sha512"
+)
+
+//Non-standard identifiers for SHA-256 and SHA-512 that earlier versions of this library accepted in place of
+//MethodSHA256 and MethodSHA512. They are not in the XML security algorithm registry (RFC 9231), but are still
+//recognized in case an Identity Provider sends them.
+const (
+	MethodSHA256Legacy = "http://www.w3.org/2000/09/xmldsig#sha256"
+	MethodSHA512Legacy = "http://www.w3.org/2000/09/xmldsig#sha512"
 )
 
 //SHA-1 is commonly used for certificate fingerprints (openssl -fingerprint and ADFS thumbprint).
@@ -137,9 +145,9 @@ func (ek *EncryptedKey) DecryptSymmetricKey(cert *tls.Certificate) (cipher.Block
 			switch ek.EncryptionMethod.DigestMethod.Algorithm {
 			case "", MethodSHA1:
 				h = sha1.New() // default
-			case MethodSHA256:
+			case MethodSHA256, MethodSHA256Legacy:
 				h = sha256.New()
-			case MethodSHA512:
+			case MethodSHA512, MethodSHA512Legacy:
 				h = sha512.New()
 			default:
 				return nil, fmt.Errorf("unsupported digest algorithm: %v",
