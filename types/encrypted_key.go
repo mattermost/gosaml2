@@ -89,13 +89,13 @@ const (
 	MethodSHA512Legacy = "http://www.w3.org/2000/09/xmldsig#sha512"
 )
 
-//SHA-1 is commonly used for certificate fingerprints (openssl -fingerprint and ADFS thumbprint).
-//SHA-1 is sufficient for our purposes here (error message).
+//The SHA-256 fingerprint of a certificate can be compared with `openssl x509 -fingerprint -sha256` and with the
+//thumbprint shown by Identity Providers. SHA-1 is avoided as it is rejected by FIPS 140 enforcement.
 func debugKeyFp(keyBytes []byte) string {
 	if len(keyBytes) < 1 {
 		return ""
 	}
-	hashFunc := sha1.New()
+	hashFunc := sha256.New()
 	hashFunc.Write(keyBytes)
 	sum := strings.ToLower(hex.EncodeToString(hashFunc.Sum(nil)))
 	var ret string

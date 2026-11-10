@@ -111,13 +111,13 @@ var oneLoginScenarioErrors = map[int]string{
 	// 38 - signed(Response(encrypted(signed(Assertion)))) - 08 wrong IDP signing cert, correct SP encryption cert
 	38: "error validating response: Could not verify certificate against trusted certs",
 	// 97 - Response(encrypted(Assertion)) - 99 wrong SP encryption cert
-	97: "error validating response: unable to decrypt encrypted assertion: cannot decrypt, error retrieving private key: key decryption attempted with mismatched cert, SP cert(cd:f6:7c:e9), assertion cert(42:99:58:b8)",
+	97: "error validating response: unable to decrypt encrypted assertion: cannot decrypt, error retrieving private key: key decryption attempted with mismatched cert, SP cert(87:02:99:f7), assertion cert(4f:7f:99:73)",
 	// 46 - Response(encrypted(signed(Assertion))) - 06 wrong SP encryption cert, correct IDP signing cert
-	46: "error validating response: unable to decrypt encrypted assertion: cannot decrypt, error retrieving private key: key decryption attempted with mismatched cert, SP cert(cd:f6:7c:e9), assertion cert(42:99:58:b8)",
+	46: "error validating response: unable to decrypt encrypted assertion: cannot decrypt, error retrieving private key: key decryption attempted with mismatched cert, SP cert(87:02:99:f7), assertion cert(4f:7f:99:73)",
 	// 47 - signed(Response(encrypted(Assertion))) - 07 wrong SP encryption cert, correct IDP signing cert
-	47: "error validating response: unable to decrypt encrypted assertion: cannot decrypt, error retrieving private key: key decryption attempted with mismatched cert, SP cert(cd:f6:7c:e9), assertion cert(42:99:58:b8)",
+	47: "error validating response: unable to decrypt encrypted assertion: cannot decrypt, error retrieving private key: key decryption attempted with mismatched cert, SP cert(87:02:99:f7), assertion cert(4f:7f:99:73)",
 	// 48 - signed(Response(encrypted(signed(Assertion)))) - 08 wrong SP encryption cert, correct IDP signing cert
-	48: "error validating response: unable to decrypt encrypted assertion: cannot decrypt, error retrieving private key: key decryption attempted with mismatched cert, SP cert(cd:f6:7c:e9), assertion cert(42:99:58:b8)",
+	48: "error validating response: unable to decrypt encrypted assertion: cannot decrypt, error retrieving private key: key decryption attempted with mismatched cert, SP cert(87:02:99:f7), assertion cert(4f:7f:99:73)",
 	// 85 - Response(Assertion) - 99 empty Response Destination (empty is ok, Destination is optional)
 	// Note: gosaml2 is correctly checking signature before contents
 	85: "error validating response: response and/or assertions must be signed",

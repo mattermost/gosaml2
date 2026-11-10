@@ -5,7 +5,9 @@ import (
 	"crypto/rsa"
 	"crypto/sha256"
 	"crypto/sha512"
+	"crypto/tls"
 	"encoding/base64"
+	"fmt"
 	"hash"
 	"strings"
 	"testing"
@@ -63,6 +65,44 @@ func TestDecryptSymmetricKey(t *testing.T) {
 		_, err := ek.DecryptSymmetricKey(cert)
 		if err == nil || !strings.Contains(err.Error(), "unsupported digest algorithm") {
 			t.Fatalf("expected an unsupported digest algorithm error, got: %v", err)
+		}
+	})
+
+	t.Run("mismatched cert reports a SHA-256 fingerprint", func(t *testing.T) {
+		idpCert := generateTestCert(t)
+		ek := &EncryptedKey{
+			X509Data:    base64.StdEncoding.EncodeToString(idpCert.Certificate[0]),
+			CipherValue: base64.StdEncoding.EncodeToString([]byte("irrelevant")),
+		}
+		_, err := ek.DecryptSymmetricKey(cert)
+		if err == nil || !strings.Contains(err.Error(), "mismatched cert") {
+			t.Fatalf("expected a mismatched cert error, got: %v", err)
+		}
+		// The error shows the first 11 characters of each fingerprint.
+		for _, c := range []*tls.Certificate{cert, idpCert} {
+			if want := debugKeyFp(c.Certificate[0])[:11]; !strings.Contains(err.Error(), want) {
+				t.Fatalf("expected the error %q to contain the fingerprint prefix %q", err, want)
+			}
+		}
+	})
+}
+
+func TestDebugKeyFp(t *testing.T) {
+	t.Run("empty input", func(t *testing.T) {
+		if fp := debugKeyFp(nil); fp != "" {
+			t.Fatalf("expected an empty fingerprint, got %q", fp)
+		}
+	})
+
+	t.Run("colon-separated SHA-256", func(t *testing.T) {
+		data := []byte("certificate bytes")
+		sum := sha256.Sum256(data)
+		parts := make([]string, len(sum))
+		for i, b := range sum {
+			parts[i] = fmt.Sprintf("%02x", b)
+		}
+		if got, want := debugKeyFp(data), strings.Join(parts, ":"); got != want {
+			t.Fatalf("expected %q, got %q", want, got)
 		}
 	})
 }
